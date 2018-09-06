@@ -111,12 +111,12 @@
 
         internal void OnSpanActivated(EventHookSpan eventHookSpan)
         {
-            this.SpanActivated(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
+            this.SpanActivated(this, new SpanLifecycleEventArgs(eventHookSpan._spanImplementation, eventHookSpan.OperationName));
         }
 
         internal void OnSpanFinished(EventHookSpan eventHookSpan)
         {
-            this.SpanFinished(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
+            this.SpanFinished(this, new SpanLifecycleEventArgs(eventHookSpan._spanImplementation, eventHookSpan.OperationName));
         }
     }
 }
