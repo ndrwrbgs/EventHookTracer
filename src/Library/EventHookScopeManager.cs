@@ -40,7 +40,7 @@
         /// <summary>
         ///     See <see cref="Active" /> for why this exists :(
         /// </summary>
-        private readonly AsyncLocal<EventHookScope> activeScope = new AsyncLocal<EventHookScope>();
+        private static readonly AsyncLocal<EventHookScope> activeScope = new AsyncLocal<EventHookScope>();
 
         public EventHookScopeManager([NotNull] IScopeManager impl, [NotNull] EventHookTracer tracer, EventHandler<EventHookTracer.LogEventArgs> spanLog, EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag)
         {
@@ -62,7 +62,7 @@
 
             IScope scope = this.impl.Activate(span, finishSpanOnDispose);
             var wrap = new EventHookScope(scope, this.tracer, finishSpanOnDispose, this.spanLog, this.spanSetTag);
-            this.activeScope.Value = wrap;
+            activeScope.Value = wrap;
             return wrap;
         }
 
@@ -75,7 +75,7 @@
         {
             get
             {
-                return this.activeScope.Value;
+                return activeScope.Value;
                 //var scope = this.impl.Active;
                 //var wrap = new EventHookScope(scope, this.tracer, );
                 //throw new NotImplementedException("Scope does not expose it's Finish/Close state, and there's not an implementation agnostic way to wrap");
