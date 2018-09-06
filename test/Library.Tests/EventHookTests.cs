@@ -6,7 +6,7 @@ namespace Library.Tests
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
-
+    using System.Threading;
     using OpenTracing;
     using OpenTracing.Contrib.EventHookTracer;
     using OpenTracing.Mock;
@@ -16,15 +16,21 @@ namespace Library.Tests
     {
         private ITracer tracer;
         private IList<SpanEvent> events;
+        private IList<Tuple<ISpan, EventHookTracer.LogEventArgs>> logEvents;
+        private IList<Tuple<ISpan, EventHookTracer.SetTagEventArgs>> setTagEvents;
 
         [TestInitialize]
         public void Initialize()
         {
             events = new List<SpanEvent>();
+            this.logEvents = new List<Tuple<ISpan, EventHookTracer.LogEventArgs>>();
+            this.setTagEvents = new List<Tuple<ISpan, EventHookTracer.SetTagEventArgs>>();
 
             var eventTracer= new EventHookTracer(new MockTracer());
             eventTracer.SpanActivated += (sender, span) => { this.events.Add(new SpanEvent(span, SpanEventType.Activated)); };
             eventTracer.SpanFinished += (sender, span) => { this.events.Add(new SpanEvent(span, SpanEventType.Finished)); };
+            eventTracer.SpanLog += (sender, args) => { this.logEvents.Add(Tuple.Create((ISpan)sender, args)); };
+            eventTracer.SpanSetTag += (sender, args) => { this.setTagEvents.Add(Tuple.Create((ISpan)sender, args)); };
 
             this.tracer = eventTracer;
         }
@@ -39,7 +45,12 @@ namespace Library.Tests
                 using (innerScope = this.tracer.BuildSpan("InnerSpan").StartActive(finishSpanOnDispose: true))
                 {
                     // Do nothing
+                    innerScope.Span.SetTag("test", "testValue");
                 }
+
+                outerScope.Span.Log("log event");
+                Thread.Sleep(10);
+                outerScope.Span.Log("log event2");
             }
 
             CollectionAssert.AreEqual(
@@ -52,6 +63,22 @@ namespace Library.Tests
                 },
                 this.events.ToList(),
                 new SpanEventComparer());
+
+            var singleTag = this.setTagEvents.Single();
+            Assert.AreEqual("test", singleTag.Item2.Key);
+            Assert.AreEqual("testValue", singleTag.Item2.Value);
+
+            var firstLog = this.logEvents.First();
+            var firstField = firstLog.Item2.Fields.Single();
+            Assert.AreEqual("event", firstField.Key);
+            Assert.AreEqual("log event", firstField.Value);
+            
+            var secondLog = this.logEvents.ElementAt(1);
+            var secondField = secondLog.Item2.Fields.Single();
+            Assert.AreEqual("event", secondField.Key);
+            Assert.AreEqual("log event2", secondField.Value);
+
+            Assert.IsTrue(secondLog.Item2.Timestamp > firstLog.Item2.Timestamp);
         }
 
         [TestMethod]

@@ -1,7 +1,7 @@
 ﻿namespace OpenTracing.Contrib.EventHookTracer
 {
-#if NET451 // AsyncLocal is .NET 4.6+, so fall back to CallContext for .NET 4.5
     using System;
+#if NET451 // AsyncLocal is .NET 4.6+, so fall back to CallContext for .NET 4.5
     using System.Runtime.Remoting;
     using System.Runtime.Remoting.Messaging;
 #else
@@ -34,16 +34,20 @@
 
         private readonly IScopeManager impl;
         private readonly EventHookTracer tracer;
+        private readonly EventHandler<EventHookTracer.LogEventArgs> spanLog;
+        private readonly EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag;
 
         /// <summary>
         ///     See <see cref="Active" /> for why this exists :(
         /// </summary>
         private readonly AsyncLocal<EventHookScope> activeScope = new AsyncLocal<EventHookScope>();
 
-        public EventHookScopeManager([NotNull] IScopeManager impl, [NotNull] EventHookTracer tracer)
+        public EventHookScopeManager([NotNull] IScopeManager impl, [NotNull] EventHookTracer tracer, EventHandler<EventHookTracer.LogEventArgs> spanLog, EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag)
         {
             this.impl = impl;
             this.tracer = tracer;
+            this.spanLog = spanLog;
+            this.spanSetTag = spanSetTag;
         }
 
         public IScope Activate(ISpan span, bool finishSpanOnDispose)
@@ -57,7 +61,7 @@
             }
 
             IScope scope = this.impl.Activate(span, finishSpanOnDispose);
-            var wrap = new EventHookScope(scope, this.tracer, finishSpanOnDispose);
+            var wrap = new EventHookScope(scope, this.tracer, finishSpanOnDispose, this.spanLog, this.spanSetTag);
             this.activeScope.Value = wrap;
             return wrap;
         }
