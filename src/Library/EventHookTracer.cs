@@ -18,7 +18,7 @@
         public ISpanBuilder BuildSpan(string operationName)
         {
             ISpanBuilder builder = this.impl.BuildSpan(operationName);
-            return new EventHookSpanBuilder(builder, this, this.SpanLog, this.SpanSetTag);
+            return new EventHookSpanBuilder(builder, this, this.SpanLog, this.SpanSetTag, new List<SetTagEventArgs>());
         }
 
         public void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
@@ -55,9 +55,9 @@
         public sealed class LogEventArgs : EventArgs
         {
             public DateTimeOffset Timestamp { get; private set; }
-            public IDictionary<string, object> Fields { get; private set; }
+            public IEnumerable<KeyValuePair<string, object>> Fields { get; private set; }
 
-            public LogEventArgs(DateTimeOffset timestamp, IDictionary<string, object> fields)
+            public LogEventArgs(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
             {
                 this.Timestamp = timestamp;
                 this.Fields = fields;

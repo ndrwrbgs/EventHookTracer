@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using OpenTracing.Tag;
 
     internal sealed class EventHookSpan : ISpan
     {
@@ -20,6 +21,34 @@
             this.tracer = tracer;
             this.spanLog = spanLog;
             this.spanSetTag = spanSetTag;
+        }
+
+        public ISpan SetTag(BooleanTag tag, bool value)
+        {
+            ISpan span = this._spanImplementation.SetTag(tag, value);
+            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
+            return new EventHookSpan(span, this.tracer, this.spanLog, this.spanSetTag);
+        }
+
+        public ISpan SetTag(IntOrStringTag tag, string value)
+        {
+            ISpan span = this._spanImplementation.SetTag(tag, value);
+            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
+            return new EventHookSpan(span, this.tracer, this.spanLog, this.spanSetTag);
+        }
+
+        public ISpan SetTag(IntTag tag, int value)
+        {
+            ISpan span = this._spanImplementation.SetTag(tag, value);
+            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
+            return new EventHookSpan(span, this.tracer, this.spanLog, this.spanSetTag);
+        }
+
+        public ISpan SetTag(StringTag tag, string value)
+        {
+            ISpan span = this._spanImplementation.SetTag(tag, value);
+            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
+            return new EventHookSpan(span, this.tracer, this.spanLog, this.spanSetTag);
         }
 
         public ISpan SetTag(string key, string value)
@@ -50,14 +79,14 @@
             return new EventHookSpan(span, this.tracer, this.spanLog, this.spanSetTag);
         }
 
-        public ISpan Log(IDictionary<string, object> fields)
+        public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
         {
             ISpan span = this._spanImplementation.Log(fields);
             this.spanLog(this, new EventHookTracer.LogEventArgs(DateTimeOffset.UtcNow, fields));
             return new EventHookSpan(span, this.tracer, this.spanLog, this.spanSetTag);
         }
 
-        public ISpan Log(DateTimeOffset timestamp, IDictionary<string, object> fields)
+        public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
         {
             ISpan span = this._spanImplementation.Log(timestamp, fields);
             this.spanLog(this, new EventHookTracer.LogEventArgs(timestamp, fields));
