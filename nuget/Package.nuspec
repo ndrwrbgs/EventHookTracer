@@ -7,7 +7,7 @@
     <owners>ndrwrbgs</owners>
     <licenseUrl>https://github.com/ndrwrbgs/EventHookTracer/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/ndrwrbgs/EventHookTracer</projectUrl>
-    <iconUrl>http://opentracing.io/img/favicon-32x32.png</iconUrl>
+    <iconUrl>https://avatars0.githubusercontent.com/u/15482765</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Hook into span-start span-finished events of OpenTracing instrumentation</description>
     <releaseNotes>Initial release.</releaseNotes>
