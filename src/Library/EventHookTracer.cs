@@ -3,15 +3,26 @@
     using System;
     using System.Collections.Generic;
     using JetBrains.Annotations;
-
+    using OpenTracing.Noop;
     using OpenTracing.Propagation;
 
     public sealed class EventHookTracer : ITracer
     {
         private readonly ITracer impl;
 
+        /// <summary>
+        /// TODO: Consider implementing this as a non-wrapping class.
+        /// The reason would be if you pass NOOP to this now, we will get some null references in places we expect to be filled
+        /// The drawback though is that ITracer interface doesn't lead itself to a CompositeTracer well, which would be needed if we do not wrap
+        /// </summary>
+        /// <param name="impl"></param>
         public EventHookTracer([NotNull] ITracer impl)
         {
+            if (impl is NoopTracer)
+            {
+                throw new ArgumentException("This requires a tracer that truly maintains context, like MockTracer");
+            }
+
             this.impl = impl;
         }
 
@@ -56,7 +67,7 @@
                 ISpan implActive = this.impl.ActiveSpan;
 
                 var believedToBeActive = this.ScopeManager.Active;
-
+                
                 if (!ReferenceEquals(believedToBeActive.Span._spanImplementation, implActive))
                 {
                     throw new InvalidOperationException("This Tracer is implemented presuming the currently active span is managed by AsyncLocalScopeManager, but it seems that is not the case.");
