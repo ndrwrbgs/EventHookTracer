@@ -1,7 +1,7 @@
 ﻿namespace OpenTracing.Contrib.EventHookTracer
 {
     using System;
-#if NET451 // AsyncLocal is .NET 4.6+, so fall back to CallContext for .NET 4.5
+#if NET45 // AsyncLocal is .NET 4.6+, so fall back to CallContext for .NET 4.5
     using System.Runtime.Remoting;
     using System.Runtime.Remoting.Messaging;
 #else
@@ -12,7 +12,7 @@
 
     internal sealed class EventHookScopeManager : IScopeManager
     {
-#if NET451 // AsyncLocal is .NET 4.6+, so fall back to CallContext for .NET 4.5
+#if NET45 // AsyncLocal is .NET 4.6+, so fall back to CallContext for .NET 4.5
         private sealed class AsyncLocal<T>
         {
             private static readonly string logicalDataKey = "__AsyncLocal_" + Guid.NewGuid();
