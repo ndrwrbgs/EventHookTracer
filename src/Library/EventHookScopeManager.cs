@@ -50,28 +50,46 @@
             this.spanSetTag = spanSetTag;
         }
 
-        public IScope Activate(ISpan span, bool finishSpanOnDispose)
+        IScope IScopeManager.Activate(ISpan span, bool finishSpanOnDispose)
         {
-            this.tracer.OnSpanActivated(span);
-
-            // It's likely this got the span from the eventhook, the underlying tracer should be given the same type it makes though
             if (span is EventHookSpan eventHookSpan)
             {
-                span = eventHookSpan._spanImplementation;
+                return this.Activate(eventHookSpan, finishSpanOnDispose);
             }
 
+            throw new NotImplementedException("Please only call Activate with Spans that are created by this Tracer.");
+            //var eventHookSpan2 = new EventHookSpan(span, this.tracer, /* name unknown */, this.spanLog, this.spanSetTag);
+            //return this.Activate(eventHookSpan2, finishSpanOnDispose);
+        }
+
+        internal EventHookScope Activate(EventHookSpan eventHookSpan, bool finishSpanOnDispose)
+        {
+            this.tracer.OnSpanActivated(eventHookSpan);
+
+            // Perform the one-time-activation logic (like logging tags)
+            if (eventHookSpan.onActivated != null)
+            {
+                eventHookSpan.onActivated(eventHookSpan);
+                // Set to null (because we want one-time-activation)
+                eventHookSpan.onActivated = null;
+            }
+            
+            var span = eventHookSpan._spanImplementation;
+
             IScope scope = this.impl.Activate(span, finishSpanOnDispose);
-            var wrap = new EventHookScope(scope, this.tracer, finishSpanOnDispose, this.spanLog, this.spanSetTag);
+            var wrap = new EventHookScope(scope, this.tracer, finishSpanOnDispose, eventHookSpan.OperationName, this.spanLog, this.spanSetTag);
             activeScope.Value = wrap;
             return wrap;
         }
+
+        IScope IScopeManager.Active => this.Active;
 
         /// <remarks>
         ///     <see cref="IScope" /> does not expose its property finishOnDispose, and there's no implementation agnostic way to
         ///     intercept the Finish on the <see cref="ISpan" />. This leaves the only option of implementing in this the scope
         ///     management.
         /// </remarks>
-        public IScope Active
+        internal EventHookScope Active
         {
             get
             {

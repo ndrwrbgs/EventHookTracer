@@ -15,10 +15,15 @@
             this.impl = impl;
         }
 
-        public ISpanBuilder BuildSpan(string operationName)
+        ISpanBuilder ITracer.BuildSpan(string operationName)
+        {
+            return this.BuildSpan(operationName);
+        }
+
+        internal EventHookSpanBuilder BuildSpan(string operationName)
         {
             ISpanBuilder builder = this.impl.BuildSpan(operationName);
-            return new EventHookSpanBuilder(builder, this, this.SpanLog, this.SpanSetTag, new List<SetTagEventArgs>());
+            return new EventHookSpanBuilder(builder, this, operationName, this.SpanLog, this.SpanSetTag, new List<SetTagEventArgs>());
         }
 
         public void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
@@ -31,7 +36,9 @@
             return this.impl.Extract(format, carrier);
         }
 
-        public IScopeManager ScopeManager
+        IScopeManager ITracer.ScopeManager => this.ScopeManager;
+
+        internal EventHookScopeManager ScopeManager
         {
             get
             {
@@ -40,22 +47,44 @@
             }
         }
 
-        public ISpan ActiveSpan
+        ISpan ITracer.ActiveSpan => this.ActiveSpan;
+
+        internal EventHookSpan ActiveSpan
         {
             get
             {
-                ISpan span = this.impl.ActiveSpan;
-                return new EventHookSpan(span, this, this.SpanLog, this.SpanSetTag);
+                ISpan implActive = this.impl.ActiveSpan;
+
+                var believedToBeActive = this.ScopeManager.Active;
+
+                if (!ReferenceEquals(believedToBeActive.Span._spanImplementation, implActive))
+                {
+                    throw new InvalidOperationException("This Tracer is implemented presuming the currently active span is managed by AsyncLocalScopeManager, but it seems that is not the case.");
+                }
+
+                return new EventHookSpan(implActive, this, believedToBeActive.Span.OperationName, this.SpanLog, this.SpanSetTag, null);
             }
         }
 
-        public event EventHandler<ISpan> SpanActivated = delegate { };
-        public event EventHandler<ISpan> SpanFinished = delegate { };
+        public sealed class SpanLifecycleEventArgs : EventArgs
+        {
+            public ISpan Span { get; }
+            public string OperationName { get; }
+
+            public SpanLifecycleEventArgs(ISpan span, string operationName)
+            {
+                this.Span = span;
+                this.OperationName = operationName;
+            }
+        }
+
+        public event EventHandler<SpanLifecycleEventArgs> SpanActivated = delegate { };
+        public event EventHandler<SpanLifecycleEventArgs> SpanFinished = delegate { };
 
         public sealed class LogEventArgs : EventArgs
         {
-            public DateTimeOffset Timestamp { get; private set; }
-            public IEnumerable<KeyValuePair<string, object>> Fields { get; private set; }
+            public DateTimeOffset Timestamp { get; }
+            public IEnumerable<KeyValuePair<string, object>> Fields { get; }
 
             public LogEventArgs(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
             {
@@ -68,8 +97,8 @@
 
         public sealed class SetTagEventArgs : EventArgs
         {
-            public string Key { get; private set; }
-            public object Value { get; private set; }
+            public string Key { get; }
+            public object Value { get; }
 
             public SetTagEventArgs(string key, object value)
             {
@@ -80,26 +109,14 @@
 
         public event EventHandler<SetTagEventArgs> SpanSetTag = delegate { };
 
-        internal void OnSpanActivated(ISpan span)
+        internal void OnSpanActivated(EventHookSpan eventHookSpan)
         {
-            ISpan underlyingSpan = span;
-            if (underlyingSpan is EventHookSpan eventHookSpan)
-            {
-                underlyingSpan = eventHookSpan._spanImplementation;
-            }
-
-            this.SpanActivated(this, underlyingSpan);
+            this.SpanActivated(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
         }
 
-        internal void OnSpanFinished(ISpan span)
+        internal void OnSpanFinished(EventHookSpan eventHookSpan)
         {
-            ISpan underlyingSpan = span;
-            if (underlyingSpan is EventHookSpan eventHookSpan)
-            {
-                underlyingSpan = eventHookSpan._spanImplementation;
-            }
-
-            this.SpanFinished(this, underlyingSpan);
+            this.SpanFinished(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
         }
     }
 }

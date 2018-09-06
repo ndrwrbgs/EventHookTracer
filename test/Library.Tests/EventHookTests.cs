@@ -27,8 +27,8 @@ namespace Library.Tests
             this.setTagEvents = new List<Tuple<ISpan, EventHookTracer.SetTagEventArgs>>();
 
             var eventTracer= new EventHookTracer(new MockTracer());
-            eventTracer.SpanActivated += (sender, span) => { this.events.Add(new SpanEvent(span, SpanEventType.Activated)); };
-            eventTracer.SpanFinished += (sender, span) => { this.events.Add(new SpanEvent(span, SpanEventType.Finished)); };
+            eventTracer.SpanActivated += (sender, span) => { this.events.Add(new SpanEvent(span.Span, SpanEventType.Activated)); };
+            eventTracer.SpanFinished += (sender, span) => { this.events.Add(new SpanEvent(span.Span, SpanEventType.Finished)); };
             eventTracer.SpanLog += (sender, args) => { this.logEvents.Add(Tuple.Create((ISpan)sender, args)); };
             eventTracer.SpanSetTag += (sender, args) => { this.setTagEvents.Add(Tuple.Create((ISpan)sender, args)); };
 
