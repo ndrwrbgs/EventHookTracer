@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>OpenTracing.Contrib.EventHookTracer</id>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
     <authors>ndrwrbgs</authors>
     <owners>ndrwrbgs</owners>
     <licenseUrl>https://github.com/ndrwrbgs/EventHookTracer/blob/master/LICENSE</licenseUrl>

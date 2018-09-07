@@ -9,6 +9,7 @@
         private readonly string spanOperationName;
         private readonly EventHandler<EventHookTracer.LogEventArgs> spanLog;
         private readonly EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag;
+        private readonly Action onDispose;
         [NotNull] private readonly EventHookTracer tracer;
         private readonly IScope impl;
 
@@ -18,7 +19,8 @@
             bool finishSpanOnDispose,
             string spanOperationName,
             EventHandler<EventHookTracer.LogEventArgs> spanLog,
-            EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag)
+            EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag,
+            Action onDispose)
         {
             this.impl = impl;
             this.tracer = tracer;
@@ -26,6 +28,7 @@
             this.spanOperationName = spanOperationName;
             this.spanLog = spanLog;
             this.spanSetTag = spanSetTag;
+            this.onDispose = onDispose;
         }
 
         public void Dispose()
@@ -36,6 +39,7 @@
             }
 
             this.impl.Dispose();
+            this.onDispose?.Invoke();
         }
 
         ISpan IScope.Span => this.Span;
