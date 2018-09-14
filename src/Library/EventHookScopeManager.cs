@@ -64,6 +64,16 @@
 
         internal EventHookScope Activate(EventHookSpan eventHookSpan, bool finishSpanOnDispose)
         {
+            var span = eventHookSpan._spanImplementation;
+
+            var previousActive = activeScope.Value;
+            IScope scope = this.impl.Activate(span, finishSpanOnDispose);
+            var wrap = new EventHookScope(
+                scope, this.tracer, finishSpanOnDispose, eventHookSpan.OperationName, this.spanLog, this.spanSetTag,
+                finishSpanOnDispose ? () => { activeScope.Value = previousActive; } : (Action)null);
+            activeScope.Value = wrap;
+
+            
             this.tracer.OnSpanActivated(eventHookSpan);
 
             // Perform the one-time-activation logic (like logging tags)
@@ -73,15 +83,8 @@
                 // Set to null (because we want one-time-activation)
                 eventHookSpan.onActivated = null;
             }
-            
-            var span = eventHookSpan._spanImplementation;
 
-            var previousActive = activeScope.Value;
-            IScope scope = this.impl.Activate(span, finishSpanOnDispose);
-            var wrap = new EventHookScope(
-                scope, this.tracer, finishSpanOnDispose, eventHookSpan.OperationName, this.spanLog, this.spanSetTag,
-                finishSpanOnDispose ? () => { activeScope.Value = previousActive; } : (Action)null);
-            activeScope.Value = wrap;
+
             return wrap;
         }
 
