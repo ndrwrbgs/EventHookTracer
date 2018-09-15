@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>OpenTracing.Contrib.EventHookTracer</id>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
     <authors>ndrwrbgs</authors>
     <owners>ndrwrbgs</owners>
     <licenseUrl>https://github.com/ndrwrbgs/EventHookTracer/blob/master/LICENSE</licenseUrl>
@@ -10,7 +10,7 @@
     <iconUrl>https://avatars0.githubusercontent.com/u/15482765</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Hook into span-start span-finished events of OpenTracing instrumentation</description>
-    <releaseNotes>Enable it to work with MockTracer.</releaseNotes>
+    <releaseNotes>Call activat-ed after the action is completed.</releaseNotes>
     <copyright>Copyright 2018</copyright>
     <tags>OpenTracing Events EventHookTracer</tags>
     <dependencies>
