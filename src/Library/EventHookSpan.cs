@@ -2,11 +2,12 @@
 {
     using System;
     using System.Collections.Generic;
+    using OpenTracing.Contrib.MutableTracer;
+    using OpenTracing.Noop;
     using OpenTracing.Tag;
 
-    internal sealed class EventHookSpan : ISpan
+    public sealed class EventHookSpan : StronglyTypedSpan<EventHookSpan, ISpanContext>
     {
-        internal readonly ISpan _spanImplementation;
         private readonly EventHookTracer tracer;
         private readonly EventHandler<EventHookTracer.LogEventArgs> spanLog;
         private readonly EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag;
@@ -15,14 +16,12 @@
         public string OperationName { get; }
 
         public EventHookSpan(
-            ISpan span,
             EventHookTracer tracer,
             string operationName,
             EventHandler<EventHookTracer.LogEventArgs> spanLog,
             EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag,
             Action<EventHookSpan> onActivated)
         {
-            this._spanImplementation = span;
             this.OperationName = operationName;
             this.tracer = tracer;
             this.spanLog = spanLog;
@@ -30,129 +29,126 @@
             this.onActivated = onActivated;
         }
 
-        public ISpan SetTag(BooleanTag tag, bool value)
+        public override EventHookSpan SetTag(BooleanTag tag, bool value)
         {
-            ISpan span = this._spanImplementation.SetTag(tag, value);
             this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan SetTag(IntOrStringTag tag, string value)
+        public override EventHookSpan SetTag(IntOrStringTag tag, string value)
         {
-            ISpan span = this._spanImplementation.SetTag(tag, value);
             this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan SetTag(IntTag tag, int value)
+        public override EventHookSpan SetTag(IntTag tag, int value)
         {
-            ISpan span = this._spanImplementation.SetTag(tag, value);
             this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan SetTag(StringTag tag, string value)
+        public override EventHookSpan SetTag(StringTag tag, string value)
         {
-            ISpan span = this._spanImplementation.SetTag(tag, value);
             this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan SetTag(string key, string value)
+        public override EventHookSpan SetTag(string key, string value)
         {
-            ISpan span = this._spanImplementation.SetTag(key, value);
             this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(key, value));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan SetTag(string key, bool value)
+        public override EventHookSpan SetTag(string key, bool value)
         {
-            ISpan span = this._spanImplementation.SetTag(key, value);
             this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(key, value));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan SetTag(string key, int value)
+        public override EventHookSpan SetTag(string key, int value)
         {
-            ISpan span = this._spanImplementation.SetTag(key, value);
             this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(key, value));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan SetTag(string key, double value)
+        public override EventHookSpan SetTag(string key, double value)
         {
-            ISpan span = this._spanImplementation.SetTag(key, value);
             this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(key, value));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
+        public override EventHookSpan Log(IEnumerable<KeyValuePair<string, object>> fields)
         {
-            ISpan span = this._spanImplementation.Log(fields);
             this.spanLog(this, new EventHookTracer.LogEventArgs(DateTimeOffset.UtcNow, fields));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
+        public override EventHookSpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
         {
-            ISpan span = this._spanImplementation.Log(timestamp, fields);
             this.spanLog(this, new EventHookTracer.LogEventArgs(timestamp, fields));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan Log(string @event)
+        public override EventHookSpan Log(string @event)
         {
-            ISpan span = this._spanImplementation.Log(@event);
             this.spanLog(
                 this,
                 new EventHookTracer.LogEventArgs(
                     DateTimeOffset.UtcNow,
                     new Dictionary<string, object> {["event"] = @event}));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan Log(DateTimeOffset timestamp, string @event)
+        public override EventHookSpan Log(DateTimeOffset timestamp, string @event)
         {
-            ISpan span = this._spanImplementation.Log(timestamp, @event);
             this.spanLog(
                 this,
                 new EventHookTracer.LogEventArgs(
                     DateTimeOffset.UtcNow,
                     new Dictionary<string, object> {["event"] = @event}));
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public ISpan SetBaggageItem(string key, string value)
+        public override EventHookSpan SetBaggageItem(string key, string value)
         {
-            ISpan span = this._spanImplementation.SetBaggageItem(key, value);
-            return new EventHookSpan(span, this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            // TODO: Not baggage support - is that allowed?
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public string GetBaggageItem(string key)
+        public override string GetBaggageItem(string key)
         {
-            return this._spanImplementation.GetBaggageItem(key);
+            // TODO: Not baggage support - is that allowed?
+            return null;
         }
 
-        public ISpan SetOperationName(string operationName)
+        public override EventHookSpan SetOperationName(string operationName)
         {
-            ISpan span = this._spanImplementation.SetOperationName(operationName);
-            return new EventHookSpan(span, this.tracer, operationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, operationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
-        public void Finish()
+        public override void Finish()
         {
             this.tracer.OnSpanFinishing(this);
-            this._spanImplementation.Finish();
+            // They should be calling Dispose on the scope generally, but if they've manually Finished the span, go ahead and NOOP fire the events
             this.tracer.OnSpanFinished(this);
         }
 
-        public void Finish(DateTimeOffset finishTimestamp)
+        public override void Finish(DateTimeOffset finishTimestamp)
         {
+            // TODO: Not passing timestamp
             this.tracer.OnSpanFinishing(this);
-            this._spanImplementation.Finish(finishTimestamp);
+            // They should be calling Dispose on the scope generally, but if they've manually Finished the span, go ahead and NOOP fire the events
             this.tracer.OnSpanFinished(this);
         }
 
-        public ISpanContext Context => this._spanImplementation.Context;
+        public override ISpanContext Context
+        {
+            get
+            {
+                // TODO: Is it required we return a non-null impl here?
+                //// return null;
+                return NoopTracerFactory.Create().ActiveSpan.Context; // Cannot directly access NoopSpanContext's ctor
+            }
+        }
     }
 }

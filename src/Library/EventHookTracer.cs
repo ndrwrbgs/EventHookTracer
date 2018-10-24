@@ -2,80 +2,40 @@
 {
     using System;
     using System.Collections.Generic;
-    using JetBrains.Annotations;
+    using OpenTracing.Contrib.MutableTracer;
     using OpenTracing.Noop;
     using OpenTracing.Propagation;
 
-    public sealed class EventHookTracer : ITracer
+    public sealed class EventHookTracer : StronglyTypedTracer<EventHookSpanBuilder, ISpanContext, EventHookScopeManager, EventHookSpan>
     {
-        private readonly ITracer impl;
-
-        /// <summary>
-        /// TODO: Consider implementing this as a non-wrapping class.
-        /// The reason would be if you pass NOOP to this now, we will get some null references in places we expect to be filled
-        /// The drawback though is that ITracer interface doesn't lead itself to a CompositeTracer well, which would be needed if we do not wrap
-        /// </summary>
-        /// <param name="impl"></param>
-        public EventHookTracer([NotNull] ITracer impl)
+        public override EventHookSpanBuilder BuildSpan(string operationName)
         {
-            if (impl is NoopTracer)
-            {
-                throw new ArgumentException("This requires a tracer that truly maintains context, like MockTracer");
-            }
-
-            this.impl = impl;
+            return new EventHookSpanBuilder(this, operationName, this.SpanLog, this.SpanSetTag, new List<SetTagEventArgs>());
         }
 
-        ISpanBuilder ITracer.BuildSpan(string operationName)
+        public override void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
         {
-            return this.BuildSpan(operationName);
         }
 
-        internal EventHookSpanBuilder BuildSpan(string operationName)
+        public override ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
         {
-            ISpanBuilder builder = this.impl.BuildSpan(operationName);
-            return new EventHookSpanBuilder(builder, this, operationName, this.SpanLog, this.SpanSetTag, new List<SetTagEventArgs>());
+            // TODO: Is it required we return a non-null impl here?
+            //// return null;
+            return NoopTracerFactory.Create().ActiveSpan.Context; // Cannot directly access NoopSpanContext's ctor
         }
 
-        public void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
-        {
-            this.impl.Inject(spanContext, format, carrier);
-        }
+        public override EventHookScopeManager ScopeManager => new EventHookScopeManager(this, this.SpanLog, this.SpanSetTag);
 
-        public ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
-        {
-            return this.impl.Extract(format, carrier);
-        }
-
-        IScopeManager ITracer.ScopeManager => this.ScopeManager;
-
-        internal EventHookScopeManager ScopeManager
+        public override EventHookSpan ActiveSpan
         {
             get
             {
-                IScopeManager scopeManager = this.impl.ScopeManager;
-                return new EventHookScopeManager(scopeManager, this, this.SpanLog, this.SpanSetTag);
+                var activeScope = this.ScopeManager.Active;
+
+                return new EventHookSpan(this, activeScope.Span.OperationName, this.SpanLog, this.SpanSetTag, null);
             }
         }
 
-        ISpan ITracer.ActiveSpan => this.ActiveSpan;
-
-        internal EventHookSpan ActiveSpan
-        {
-            get
-            {
-                ISpan implActive = this.impl.ActiveSpan;
-
-                var believedToBeActive = this.ScopeManager.Active;
-                
-                if (!ReferenceEquals(believedToBeActive.Span._spanImplementation, implActive))
-                {
-                    throw new InvalidOperationException("This Tracer is implemented presuming the currently active span is managed by AsyncLocalScopeManager, but it seems that is not the case.");
-                }
-
-                return new EventHookSpan(implActive, this, believedToBeActive.Span.OperationName, this.SpanLog, this.SpanSetTag, null);
-            }
-        }
 
         public sealed class SpanLifecycleEventArgs : EventArgs
         {
@@ -124,22 +84,22 @@
 
         internal void OnSpanActivated(EventHookSpan eventHookSpan)
         {
-            this.SpanActivated(this, new SpanLifecycleEventArgs(eventHookSpan._spanImplementation, eventHookSpan.OperationName));
+            this.SpanActivated(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
         }
 
         internal void OnSpanActivating(EventHookSpan eventHookSpan)
         {
-            this.SpanActivating(this, new SpanLifecycleEventArgs(eventHookSpan._spanImplementation, eventHookSpan.OperationName));
+            this.SpanActivating(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
         }
 
         internal void OnSpanFinished(EventHookSpan eventHookSpan)
         {
-            this.SpanFinished(this, new SpanLifecycleEventArgs(eventHookSpan._spanImplementation, eventHookSpan.OperationName));
+            this.SpanFinished(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
         }
 
         internal void OnSpanFinishing(EventHookSpan eventHookSpan)
         {
-            this.SpanFinishing(this, new SpanLifecycleEventArgs(eventHookSpan._spanImplementation, eventHookSpan.OperationName));
+            this.SpanFinishing(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
         }
     }
 }

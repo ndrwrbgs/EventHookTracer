@@ -26,7 +26,7 @@ namespace Library.Tests
             this.logEvents = new List<Tuple<ISpan, EventHookTracer.LogEventArgs>>();
             this.setTagEvents = new List<Tuple<ISpan, EventHookTracer.SetTagEventArgs>>();
 
-            var eventTracer= new EventHookTracer(new MockTracer());
+            var eventTracer= new EventHookTracer();
             eventTracer.SpanActivated += (sender, span) => { this.events.Add(new SpanEvent(span.Span, SpanEventType.Activated)); };
             eventTracer.SpanFinished += (sender, span) => { this.events.Add(new SpanEvent(span.Span, SpanEventType.Finished)); };
             eventTracer.SpanLog += (sender, args) => { this.logEvents.Add(Tuple.Create((ISpan)sender, args)); };
@@ -212,27 +212,18 @@ namespace Library.Tests
                 ISpan xSpan = xSpanEvent.Span;
                 ISpan ySpan = ySpanEvent.Span;
 
-                if (xSpan is EventHookSpan eXSpan)
-                {
-                    xSpan = eXSpan._spanImplementation;
-                }
-
-                if (ySpan is EventHookSpan eYSpan)
-                {
-                    ySpan = eYSpan._spanImplementation;
-                }
-
-                if (!ReferenceEquals(xSpan, ySpan))
-                {
-                    return -1;
-                }
-
                 if (xSpanEvent.Type != ySpanEvent.Type)
                 {
                     return -1;
                 }
 
-                return 0;
+                if (xSpan is EventHookSpan eXSpan
+                    && ySpan is EventHookSpan eYSpan)
+                {
+                    return ReferenceEquals(eXSpan.onActivated, eYSpan.onActivated) ? 0 : -1;
+                }
+
+                return -1;
             }
         }
     }

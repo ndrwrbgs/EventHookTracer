@@ -9,8 +9,10 @@
 #endif
 
     using JetBrains.Annotations;
+    using OpenTracing.Contrib.MutableTracer;
+    using OpenTracing.Util;
 
-    internal sealed class EventHookScopeManager : IScopeManager
+    public sealed class EventHookScopeManager : StronglyTypedScopeManager<EventHookScope, EventHookSpan>
     {
 #if NET45 // AsyncLocal is .NET 4.6+, so fall back to CallContext for .NET 4.5
         private sealed class AsyncLocal<T>
@@ -32,7 +34,6 @@
         }
 #endif
 
-        private readonly IScopeManager impl;
         private readonly EventHookTracer tracer;
         private readonly EventHandler<EventHookTracer.LogEventArgs> spanLog;
         private readonly EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag;
@@ -42,39 +43,22 @@
         /// </summary>
         private static readonly AsyncLocal<EventHookScope> activeScope = new AsyncLocal<EventHookScope>();
 
-        public EventHookScopeManager([NotNull] IScopeManager impl, [NotNull] EventHookTracer tracer, EventHandler<EventHookTracer.LogEventArgs> spanLog, EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag)
+        public EventHookScopeManager([NotNull] EventHookTracer tracer, EventHandler<EventHookTracer.LogEventArgs> spanLog, EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag)
         {
-            this.impl = impl;
             this.tracer = tracer;
             this.spanLog = spanLog;
             this.spanSetTag = spanSetTag;
         }
 
-        IScope IScopeManager.Activate(ISpan span, bool finishSpanOnDispose)
+        public override EventHookScope Activate(EventHookSpan eventHookSpan, bool finishSpanOnDispose)
         {
-            if (span is EventHookSpan eventHookSpan)
-            {
-                return this.Activate(eventHookSpan, finishSpanOnDispose);
-            }
-
-            throw new NotImplementedException("Please only call Activate with Spans that are created by this Tracer.");
-            //var eventHookSpan2 = new EventHookSpan(span, this.tracer, /* name unknown */, this.spanLog, this.spanSetTag);
-            //return this.Activate(eventHookSpan2, finishSpanOnDispose);
-        }
-
-        internal EventHookScope Activate(EventHookSpan eventHookSpan, bool finishSpanOnDispose)
-        {
-            var span = eventHookSpan._spanImplementation;
-
             this.tracer.OnSpanActivating(eventHookSpan);
 
             var previousActive = activeScope.Value;
-            IScope scope = this.impl.Activate(span, finishSpanOnDispose);
             var wrap = new EventHookScope(
-                scope, this.tracer, finishSpanOnDispose, eventHookSpan.OperationName, this.spanLog, this.spanSetTag,
+                this.tracer, finishSpanOnDispose, eventHookSpan.OperationName, this.spanLog, this.spanSetTag,
                 finishSpanOnDispose ? () => { activeScope.Value = previousActive; } : (Action)null);
             activeScope.Value = wrap;
-
             
             this.tracer.OnSpanActivated(eventHookSpan);
 
@@ -90,14 +74,12 @@
             return wrap;
         }
 
-        IScope IScopeManager.Active => this.Active;
-
         /// <remarks>
         ///     <see cref="IScope" /> does not expose its property finishOnDispose, and there's no implementation agnostic way to
         ///     intercept the Finish on the <see cref="ISpan" />. This leaves the only option of implementing in this the scope
         ///     management.
         /// </remarks>
-        internal EventHookScope Active
+        public override EventHookScope Active
         {
             get
             {

@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\OpenTracing-MutableTracer\src\Library\Library.csproj" />
   </ItemGroup>
 
 </Project>

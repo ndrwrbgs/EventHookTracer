@@ -2,8 +2,9 @@
 {
     using System;
     using JetBrains.Annotations;
+    using OpenTracing.Contrib.MutableTracer;
 
-    internal sealed class EventHookScope : IScope
+    public sealed class EventHookScope : StronglyTypedScope<EventHookSpan>
     {
         private readonly bool finishSpanOnDispose;
         private readonly string spanOperationName;
@@ -11,10 +12,8 @@
         private readonly EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag;
         private readonly Action onDispose;
         [NotNull] private readonly EventHookTracer tracer;
-        private readonly IScope impl;
 
         public EventHookScope(
-            [NotNull] IScope impl,
             [NotNull] EventHookTracer tracer,
             bool finishSpanOnDispose,
             string spanOperationName,
@@ -22,7 +21,6 @@
             EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag,
             Action onDispose)
         {
-            this.impl = impl;
             this.tracer = tracer;
             this.finishSpanOnDispose = finishSpanOnDispose;
             this.spanOperationName = spanOperationName;
@@ -31,14 +29,13 @@
             this.onDispose = onDispose;
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             if (this.finishSpanOnDispose)
             {
                 this.tracer.OnSpanFinishing(this.Span);
             }
 
-            this.impl.Dispose();
             this.onDispose?.Invoke();
 
             if (this.finishSpanOnDispose)
@@ -47,14 +44,11 @@
             }
         }
 
-        ISpan IScope.Span => this.Span;
-
-        internal EventHookSpan Span
+        public override EventHookSpan Span
         {
             get
             {
-                ISpan span = this.impl.Span;
-                var wrap = new EventHookSpan(span, this.tracer, this.spanOperationName, this.spanLog, this.spanSetTag, null);
+                var wrap = new EventHookSpan(this.tracer, this.spanOperationName, this.spanLog, this.spanSetTag, null);
                 return wrap;
             }
         }
