@@ -88,9 +88,11 @@
                 this.OperationName = operationName;
             }
         }
-
+        
         public event EventHandler<SpanLifecycleEventArgs> SpanActivated = delegate { };
+        public event EventHandler<SpanLifecycleEventArgs> SpanActivating = delegate { };
         public event EventHandler<SpanLifecycleEventArgs> SpanFinished = delegate { };
+        public event EventHandler<SpanLifecycleEventArgs> SpanFinishing = delegate { };
 
         public sealed class LogEventArgs : EventArgs
         {
@@ -125,9 +127,19 @@
             this.SpanActivated(this, new SpanLifecycleEventArgs(eventHookSpan._spanImplementation, eventHookSpan.OperationName));
         }
 
+        internal void OnSpanActivating(EventHookSpan eventHookSpan)
+        {
+            this.SpanActivating(this, new SpanLifecycleEventArgs(eventHookSpan._spanImplementation, eventHookSpan.OperationName));
+        }
+
         internal void OnSpanFinished(EventHookSpan eventHookSpan)
         {
             this.SpanFinished(this, new SpanLifecycleEventArgs(eventHookSpan._spanImplementation, eventHookSpan.OperationName));
+        }
+
+        internal void OnSpanFinishing(EventHookSpan eventHookSpan)
+        {
+            this.SpanFinishing(this, new SpanLifecycleEventArgs(eventHookSpan._spanImplementation, eventHookSpan.OperationName));
         }
     }
 }

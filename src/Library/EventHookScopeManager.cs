@@ -66,6 +66,8 @@
         {
             var span = eventHookSpan._spanImplementation;
 
+            this.tracer.OnSpanActivating(eventHookSpan);
+
             var previousActive = activeScope.Value;
             IScope scope = this.impl.Activate(span, finishSpanOnDispose);
             var wrap = new EventHookScope(

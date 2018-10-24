@@ -35,11 +35,16 @@
         {
             if (this.finishSpanOnDispose)
             {
-                this.tracer.OnSpanFinished(this.Span);
+                this.tracer.OnSpanFinishing(this.Span);
             }
 
             this.impl.Dispose();
             this.onDispose?.Invoke();
+
+            if (this.finishSpanOnDispose)
+            {
+                this.tracer.OnSpanFinished(this.Span);
+            }
         }
 
         ISpan IScope.Span => this.Span;

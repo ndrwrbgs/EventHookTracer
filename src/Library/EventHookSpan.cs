@@ -141,14 +141,16 @@
 
         public void Finish()
         {
-            this.tracer.OnSpanFinished(this);
+            this.tracer.OnSpanFinishing(this);
             this._spanImplementation.Finish();
+            this.tracer.OnSpanFinished(this);
         }
 
         public void Finish(DateTimeOffset finishTimestamp)
         {
-            this.tracer.OnSpanFinished(this);
+            this.tracer.OnSpanFinishing(this);
             this._spanImplementation.Finish(finishTimestamp);
+            this.tracer.OnSpanFinished(this);
         }
 
         public ISpanContext Context => this._spanImplementation.Context;
