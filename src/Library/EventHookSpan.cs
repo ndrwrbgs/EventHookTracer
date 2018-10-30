@@ -6,7 +6,7 @@
     using OpenTracing.Noop;
     using OpenTracing.Tag;
 
-    public sealed class EventHookSpan : StronglyTypedSpan<EventHookSpan, ISpanContext>
+    public sealed class EventHookSpan : StronglyTypedSpan<EventHookSpan, ISpanContext>, IEquatable<EventHookSpan>
     {
         private readonly EventHookTracer tracer;
         private readonly EventHandler<EventHookTracer.LogEventArgs> spanLog;
@@ -149,6 +149,43 @@
                 //// return null;
                 return NoopTracerFactory.Create().ActiveSpan.Context; // Cannot directly access NoopSpanContext's ctor
             }
+        }
+
+        public bool Equals(EventHookSpan other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return Equals(this.tracer, other.tracer) && Equals(this.spanLog, other.spanLog) && Equals(this.spanSetTag, other.spanSetTag) && Equals(this.onActivated, other.onActivated) && string.Equals(this.OperationName, other.OperationName);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj is EventHookSpan other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = (this.tracer != null ? this.tracer.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (this.spanLog != null ? this.spanLog.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (this.spanSetTag != null ? this.spanSetTag.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (this.onActivated != null ? this.onActivated.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (this.OperationName != null ? this.OperationName.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
+
+        public static bool operator ==(EventHookSpan left, EventHookSpan right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(EventHookSpan left, EventHookSpan right)
+        {
+            return !Equals(left, right);
         }
     }
 }

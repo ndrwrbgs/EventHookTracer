@@ -28,7 +28,9 @@ namespace Library.Tests
 
             var eventTracer= new EventHookTracer();
             eventTracer.SpanActivated += (sender, span) => { this.events.Add(new SpanEvent(span.Span, SpanEventType.Activated)); };
+            eventTracer.SpanActivating += (sender, span) => { this.events.Add(new SpanEvent(span.Span, SpanEventType.Activating)); };
             eventTracer.SpanFinished += (sender, span) => { this.events.Add(new SpanEvent(span.Span, SpanEventType.Finished)); };
+            eventTracer.SpanFinishing += (sender, span) => { this.events.Add(new SpanEvent(span.Span, SpanEventType.Finishing)); };
             eventTracer.SpanLog += (sender, args) => { this.logEvents.Add(Tuple.Create((ISpan)sender, args)); };
             eventTracer.SpanSetTag += (sender, args) => { this.setTagEvents.Add(Tuple.Create((ISpan)sender, args)); };
 
@@ -56,9 +58,16 @@ namespace Library.Tests
             CollectionAssert.AreEqual(
                 new[]
                 {
+                    new SpanEvent(outerScope.Span, SpanEventType.Activating),
                     new SpanEvent(outerScope.Span, SpanEventType.Activated),
+
+                    new SpanEvent(innerScope.Span, SpanEventType.Activating),
                     new SpanEvent(innerScope.Span, SpanEventType.Activated),
+
+                    new SpanEvent(innerScope.Span, SpanEventType.Finishing),
                     new SpanEvent(innerScope.Span, SpanEventType.Finished),
+
+                    new SpanEvent(outerScope.Span, SpanEventType.Finishing),
                     new SpanEvent(outerScope.Span, SpanEventType.Finished),
                 },
                 this.events.ToList(),
@@ -81,8 +90,52 @@ namespace Library.Tests
             Assert.IsTrue(secondLog.Item2.Timestamp > firstLog.Item2.Timestamp);
         }
 
+        /// <summary>
+        /// Validates not only the call order of Activate/Finish, but also that the state between these operations is as expected
+        /// </summary>
         [TestMethod]
-        public void WithSomeModifications()
+        public void ProperOrderingOfEvents()
+        {
+            EventHookSpan activeSpanWhenActivating = null;
+            EventHookSpan activeSpanWhenActivated = null;
+            EventHookSpan activeSpanWhenFinishing = null;
+            EventHookSpan activeSpanWhenFinished = null;
+
+            var eventHookTracer = new EventHookTracer();
+            eventHookTracer.SpanActivating += (sender, args) =>
+            {
+                activeSpanWhenActivating = eventHookTracer.ActiveSpan;
+            };
+            eventHookTracer.SpanActivated += (sender, args) =>
+            {
+                activeSpanWhenActivated = eventHookTracer.ActiveSpan;
+            };
+            eventHookTracer.SpanFinishing += (sender, args) =>
+            {
+                activeSpanWhenFinishing = eventHookTracer.ActiveSpan;
+            };
+            eventHookTracer.SpanFinished += (sender, args) =>
+            {
+                activeSpanWhenFinished = eventHookTracer.ActiveSpan;
+            };
+
+            EventHookSpan testSpan;
+            using (var testScope = eventHookTracer.BuildSpan("TestSpan").StartActive(finishSpanOnDispose: true))
+            {
+                testSpan = testScope.Span;
+            }
+
+            Assert.AreEqual(null, activeSpanWhenActivating);
+            Assert.AreNotEqual(null, activeSpanWhenActivated);
+            Assert.AreNotEqual(null, activeSpanWhenFinishing);
+            Assert.AreEqual(null, activeSpanWhenFinished);
+
+            Assert.AreEqual(activeSpanWhenActivated, activeSpanWhenFinishing);
+            Assert.AreEqual(testSpan, activeSpanWhenActivated);
+        }
+
+        [TestMethod]
+        public void WithSomeModifications() // TODO: What kind of name is that?
         {
             IScope outerScope;
             using (outerScope = this.tracer.BuildSpan("OuterSpan")
@@ -96,7 +149,9 @@ namespace Library.Tests
             CollectionAssert.AreEqual(
                 new[]
                 {
+                    new SpanEvent(outerScope.Span, SpanEventType.Activating),
                     new SpanEvent(outerScope.Span, SpanEventType.Activated),
+                    new SpanEvent(outerScope.Span, SpanEventType.Finishing),
                     new SpanEvent(outerScope.Span, SpanEventType.Finished),
                 },
                 this.events.ToList(),
@@ -123,9 +178,16 @@ namespace Library.Tests
             CollectionAssert.AreEqual(
                 new[]
                 {
+                    new SpanEvent(outerScope.Span, SpanEventType.Activating),
                     new SpanEvent(outerScope.Span, SpanEventType.Activated),
+
+                    new SpanEvent(innerScope.Span, SpanEventType.Activating),
                     new SpanEvent(innerScope.Span, SpanEventType.Activated),
+
+                    new SpanEvent(innerScope.Span, SpanEventType.Finishing),
                     new SpanEvent(innerScope.Span, SpanEventType.Finished),
+
+                    new SpanEvent(outerScope.Span, SpanEventType.Finishing),
                     new SpanEvent(outerScope.Span, SpanEventType.Finished),
                 },
                 this.events.ToList(),
@@ -142,7 +204,9 @@ namespace Library.Tests
             CollectionAssert.AreEqual(
                 new[]
                 {
+                    new SpanEvent(scope.Span, SpanEventType.Activating),
                     new SpanEvent(scope.Span, SpanEventType.Activated),
+                    new SpanEvent(scope.Span, SpanEventType.Finishing),
                     new SpanEvent(scope.Span, SpanEventType.Finished),
                 },
                 this.events.ToList(),
@@ -159,7 +223,9 @@ namespace Library.Tests
             CollectionAssert.AreEqual(
                 new[]
                 {
+                    new SpanEvent(scope.Span, SpanEventType.Activating),
                     new SpanEvent(scope.Span, SpanEventType.Activated),
+                    new SpanEvent(scope.Span, SpanEventType.Finishing),
                     new SpanEvent(scope.Span, SpanEventType.Finished),
                 },
                 this.events.ToList(),
@@ -176,7 +242,9 @@ namespace Library.Tests
             CollectionAssert.AreEqual(
                 new[]
                 {
+                    new SpanEvent(scope.Span, SpanEventType.Activating),
                     new SpanEvent(scope.Span, SpanEventType.Activated),
+                    new SpanEvent(scope.Span, SpanEventType.Finishing),
                     new SpanEvent(scope.Span, SpanEventType.Finished),
                 },
                 this.events.ToList(),
@@ -186,7 +254,9 @@ namespace Library.Tests
         private enum SpanEventType
         {
             Activated,
-            Finished
+            Activating,
+            Finished,
+            Finishing,
         }
 
         private sealed class SpanEvent

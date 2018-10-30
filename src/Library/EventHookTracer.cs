@@ -32,6 +32,11 @@
             {
                 var activeScope = this.ScopeManager.Active;
 
+                if (activeScope == null)
+                {
+                    return null;
+                }
+
                 return new EventHookSpan(this, activeScope.Span.OperationName, this.SpanLog, this.SpanSetTag, null);
             }
         }
