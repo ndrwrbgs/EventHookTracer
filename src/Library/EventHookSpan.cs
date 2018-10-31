@@ -9,8 +9,8 @@
     public sealed class EventHookSpan : StronglyTypedSpan<EventHookSpan, ISpanContext>, IEquatable<EventHookSpan>
     {
         private readonly EventHookTracer tracer;
-        private readonly EventHandler<EventHookTracer.LogEventArgs> spanLog;
-        private readonly EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag;
+        private readonly EventHandler<LogEventArgs> spanLog;
+        private readonly EventHandler<SetTagEventArgs> spanSetTag;
         internal Action<EventHookSpan> onActivated { get; set; }
 
         public string OperationName { get; }
@@ -18,8 +18,8 @@
         public EventHookSpan(
             EventHookTracer tracer,
             string operationName,
-            EventHandler<EventHookTracer.LogEventArgs> spanLog,
-            EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag,
+            EventHandler<LogEventArgs> spanLog,
+            EventHandler<SetTagEventArgs> spanSetTag,
             Action<EventHookSpan> onActivated)
         {
             this.OperationName = operationName;
@@ -31,61 +31,61 @@
 
         public override EventHookSpan SetTag(BooleanTag tag, bool value)
         {
-            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
+            this.spanSetTag(this, new SetTagEventArgs(tag.Key, value));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
         public override EventHookSpan SetTag(IntOrStringTag tag, string value)
         {
-            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
+            this.spanSetTag(this, new SetTagEventArgs(tag.Key, value));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
         public override EventHookSpan SetTag(IntTag tag, int value)
         {
-            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
+            this.spanSetTag(this, new SetTagEventArgs(tag.Key, value));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
         public override EventHookSpan SetTag(StringTag tag, string value)
         {
-            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(tag.Key, value));
+            this.spanSetTag(this, new SetTagEventArgs(tag.Key, value));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
         public override EventHookSpan SetTag(string key, string value)
         {
-            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(key, value));
+            this.spanSetTag(this, new SetTagEventArgs(key, value));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
         public override EventHookSpan SetTag(string key, bool value)
         {
-            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(key, value));
+            this.spanSetTag(this, new SetTagEventArgs(key, value));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
         public override EventHookSpan SetTag(string key, int value)
         {
-            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(key, value));
+            this.spanSetTag(this, new SetTagEventArgs(key, value));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
         public override EventHookSpan SetTag(string key, double value)
         {
-            this.spanSetTag(this, new EventHookTracer.SetTagEventArgs(key, value));
+            this.spanSetTag(this, new SetTagEventArgs(key, value));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
         public override EventHookSpan Log(IEnumerable<KeyValuePair<string, object>> fields)
         {
-            this.spanLog(this, new EventHookTracer.LogEventArgs(DateTimeOffset.UtcNow, fields));
+            this.spanLog(this, new LogEventArgs(DateTimeOffset.UtcNow, fields));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
         public override EventHookSpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
         {
-            this.spanLog(this, new EventHookTracer.LogEventArgs(timestamp, fields));
+            this.spanLog(this, new LogEventArgs(timestamp, fields));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
         }
 
@@ -93,7 +93,7 @@
         {
             this.spanLog(
                 this,
-                new EventHookTracer.LogEventArgs(
+                new LogEventArgs(
                     DateTimeOffset.UtcNow,
                     new Dictionary<string, object> {["event"] = @event}));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
@@ -103,7 +103,7 @@
         {
             this.spanLog(
                 this,
-                new EventHookTracer.LogEventArgs(
+                new LogEventArgs(
                     DateTimeOffset.UtcNow,
                     new Dictionary<string, object> {["event"] = @event}));
             return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);

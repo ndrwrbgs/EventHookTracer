@@ -16,15 +16,15 @@ namespace Library.Tests
     {
         private ITracer tracer;
         private IList<SpanEvent> events;
-        private IList<Tuple<ISpan, EventHookTracer.LogEventArgs>> logEvents;
-        private IList<Tuple<ISpan, EventHookTracer.SetTagEventArgs>> setTagEvents;
+        private IList<Tuple<ISpan, LogEventArgs>> logEvents;
+        private IList<Tuple<ISpan, SetTagEventArgs>> setTagEvents;
 
         [TestInitialize]
         public void Initialize()
         {
             events = new List<SpanEvent>();
-            this.logEvents = new List<Tuple<ISpan, EventHookTracer.LogEventArgs>>();
-            this.setTagEvents = new List<Tuple<ISpan, EventHookTracer.SetTagEventArgs>>();
+            this.logEvents = new List<Tuple<ISpan, LogEventArgs>>();
+            this.setTagEvents = new List<Tuple<ISpan, SetTagEventArgs>>();
 
             var eventTracer= new EventHookTracer();
             eventTracer.SpanActivated += (sender, span) => { this.events.Add(new SpanEvent(span.Span, SpanEventType.Activated)); };

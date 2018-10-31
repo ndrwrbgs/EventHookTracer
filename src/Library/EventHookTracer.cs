@@ -42,48 +42,12 @@
         }
 
 
-        public sealed class SpanLifecycleEventArgs : EventArgs
-        {
-            public ISpan Span { get; }
-            public string OperationName { get; }
-
-            public SpanLifecycleEventArgs(ISpan span, string operationName)
-            {
-                this.Span = span;
-                this.OperationName = operationName;
-            }
-        }
-        
         public event EventHandler<SpanLifecycleEventArgs> SpanActivated = delegate { };
         public event EventHandler<SpanLifecycleEventArgs> SpanActivating = delegate { };
         public event EventHandler<SpanLifecycleEventArgs> SpanFinished = delegate { };
         public event EventHandler<SpanLifecycleEventArgs> SpanFinishing = delegate { };
 
-        public sealed class LogEventArgs : EventArgs
-        {
-            public DateTimeOffset Timestamp { get; }
-            public IEnumerable<KeyValuePair<string, object>> Fields { get; }
-
-            public LogEventArgs(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
-            {
-                this.Timestamp = timestamp;
-                this.Fields = fields;
-            }
-        }
-
         public event EventHandler<LogEventArgs> SpanLog = delegate { };
-
-        public sealed class SetTagEventArgs : EventArgs
-        {
-            public string Key { get; }
-            public object Value { get; }
-
-            public SetTagEventArgs(string key, object value)
-            {
-                this.Key = key;
-                this.Value = value;
-            }
-        }
 
         public event EventHandler<SetTagEventArgs> SpanSetTag = delegate { };
 

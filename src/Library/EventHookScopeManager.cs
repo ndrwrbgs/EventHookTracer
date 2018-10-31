@@ -35,15 +35,15 @@
 #endif
 
         private readonly EventHookTracer tracer;
-        private readonly EventHandler<EventHookTracer.LogEventArgs> spanLog;
-        private readonly EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag;
+        private readonly EventHandler<LogEventArgs> spanLog;
+        private readonly EventHandler<SetTagEventArgs> spanSetTag;
 
         /// <summary>
         ///     See <see cref="Active" /> for why this exists :(
         /// </summary>
         private static readonly AsyncLocal<EventHookScope> activeScope = new AsyncLocal<EventHookScope>();
 
-        public EventHookScopeManager([NotNull] EventHookTracer tracer, EventHandler<EventHookTracer.LogEventArgs> spanLog, EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag)
+        public EventHookScopeManager([NotNull] EventHookTracer tracer, EventHandler<LogEventArgs> spanLog, EventHandler<SetTagEventArgs> spanSetTag)
         {
             this.tracer = tracer;
             this.spanLog = spanLog;
@@ -59,8 +59,6 @@
                 this.tracer, finishSpanOnDispose, eventHookSpan.OperationName, this.spanLog, this.spanSetTag,
                 finishSpanOnDispose ? () => { activeScope.Value = previousActive; } : (Action)null);
             activeScope.Value = wrap;
-            
-            this.tracer.OnSpanActivated(eventHookSpan);
 
             // Perform the one-time-activation logic (like logging tags)
             if (eventHookSpan.onActivated != null)
@@ -69,7 +67,8 @@
                 // Set to null (because we want one-time-activation)
                 eventHookSpan.onActivated = null;
             }
-
+            
+            this.tracer.OnSpanActivated(eventHookSpan);
 
             return wrap;
         }

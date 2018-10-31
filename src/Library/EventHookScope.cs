@@ -8,8 +8,8 @@
     {
         private readonly bool finishSpanOnDispose;
         private readonly string spanOperationName;
-        private readonly EventHandler<EventHookTracer.LogEventArgs> spanLog;
-        private readonly EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag;
+        private readonly EventHandler<LogEventArgs> spanLog;
+        private readonly EventHandler<SetTagEventArgs> spanSetTag;
         private readonly Action onDispose;
         [NotNull] private readonly EventHookTracer tracer;
 
@@ -17,8 +17,8 @@
             [NotNull] EventHookTracer tracer,
             bool finishSpanOnDispose,
             string spanOperationName,
-            EventHandler<EventHookTracer.LogEventArgs> spanLog,
-            EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag,
+            EventHandler<LogEventArgs> spanLog,
+            EventHandler<SetTagEventArgs> spanSetTag,
             Action onDispose)
         {
             this.tracer = tracer;

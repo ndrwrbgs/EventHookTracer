@@ -11,16 +11,16 @@
     {
         [NotNull] private readonly EventHookTracer tracer;
         private readonly string operationName;
-        private readonly EventHandler<EventHookTracer.LogEventArgs> spanLog;
-        private readonly EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag;
-        private readonly IList<EventHookTracer.SetTagEventArgs> tagsOnStart;
+        private readonly EventHandler<LogEventArgs> spanLog;
+        private readonly EventHandler<SetTagEventArgs> spanSetTag;
+        private readonly IList<SetTagEventArgs> tagsOnStart;
 
         public EventHookSpanBuilder(
             [NotNull] EventHookTracer tracer,
             string operationName,
-            EventHandler<EventHookTracer.LogEventArgs> spanLog,
-            EventHandler<EventHookTracer.SetTagEventArgs> spanSetTag,
-            IList<EventHookTracer.SetTagEventArgs> tagsOnStart)
+            EventHandler<LogEventArgs> spanLog,
+            EventHandler<SetTagEventArgs> spanSetTag,
+            IList<SetTagEventArgs> tagsOnStart)
         {
             this.tracer = tracer;
             this.operationName = operationName;
@@ -60,57 +60,58 @@
 
         public override EventHookSpanBuilder WithTag(BooleanTag tag, bool value)
         {
-            var newTags = new List<EventHookTracer.SetTagEventArgs>(this.tagsOnStart)
-                {new EventHookTracer.SetTagEventArgs(tag.Key, value)};
+            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
+                {new SetTagEventArgs(tag.Key, value)};
             return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags);
         }
 
         public override EventHookSpanBuilder WithTag(IntOrStringTag tag, string value)
         {
-            var newTags = new List<EventHookTracer.SetTagEventArgs>(this.tagsOnStart)
-                {new EventHookTracer.SetTagEventArgs(tag.Key, value)};
+            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
+                {new SetTagEventArgs(tag.Key, value)};
             return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags);
         }
 
         public override EventHookSpanBuilder WithTag(IntTag tag, int value)
         {
-            var newTags = new List<EventHookTracer.SetTagEventArgs>(this.tagsOnStart)
-                {new EventHookTracer.SetTagEventArgs(tag.Key, value)};
+            // TODO: use something else, List is not the most efficient here
+            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
+                {new SetTagEventArgs(tag.Key, value)};
             return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags);
         }
 
         public override EventHookSpanBuilder WithTag(StringTag tag, string value)
         {
-            var newTags = new List<EventHookTracer.SetTagEventArgs>(this.tagsOnStart)
-                {new EventHookTracer.SetTagEventArgs(tag.Key, value)};
+            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
+                {new SetTagEventArgs(tag.Key, value)};
             return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags);
         }
 
         public override EventHookSpanBuilder WithTag(string key, string value)
         {
-            var newTags = new List<EventHookTracer.SetTagEventArgs>(this.tagsOnStart)
-                {new EventHookTracer.SetTagEventArgs(key, value)};
+            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
+                {new SetTagEventArgs(key, value)};
             return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags);
         }
 
         public override EventHookSpanBuilder WithTag(string key, bool value)
         {
-            var newTags = new List<EventHookTracer.SetTagEventArgs>(this.tagsOnStart)
-                {new EventHookTracer.SetTagEventArgs(key, value)};
+            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
+                {new SetTagEventArgs(key, value)};
             return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags);
         }
 
         public override EventHookSpanBuilder WithTag(string key, int value)
         {
-            var newTags = new List<EventHookTracer.SetTagEventArgs>(this.tagsOnStart)
-                {new EventHookTracer.SetTagEventArgs(key, value)};
+            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
+                {new SetTagEventArgs(key, value)};
             return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags);
         }
 
         public override EventHookSpanBuilder WithTag(string key, double value)
         {
-            var newTags = new List<EventHookTracer.SetTagEventArgs>(this.tagsOnStart)
-                {new EventHookTracer.SetTagEventArgs(key, value)};
+            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
+                {new SetTagEventArgs(key, value)};
             return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags);
         }
 
