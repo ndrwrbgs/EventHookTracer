@@ -7,10 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Library", "Library.csproj",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Library.Tests", "..\..\test\Library.Tests\Library.Tests.csproj", "{F5D6CA30-1BB1-4A79-AACE-F98D90834073}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NewFolder1", "NewFolder1", "{3AD39572-91D0-4C2B-9615-D34F2119AF7F}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Library", "..\..\..\OpenTracing-MutableTracer\src\Library\Library.csproj", "{1F6F1FE1-3AD3-404A-8CBC-B8C8AB85D626}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,16 +21,11 @@ Global
 		{F5D6CA30-1BB1-4A79-AACE-F98D90834073}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5D6CA30-1BB1-4A79-AACE-F98D90834073}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5D6CA30-1BB1-4A79-AACE-F98D90834073}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1F6F1FE1-3AD3-404A-8CBC-B8C8AB85D626}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1F6F1FE1-3AD3-404A-8CBC-B8C8AB85D626}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1F6F1FE1-3AD3-404A-8CBC-B8C8AB85D626}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1F6F1FE1-3AD3-404A-8CBC-B8C8AB85D626}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{1F6F1FE1-3AD3-404A-8CBC-B8C8AB85D626} = {3AD39572-91D0-4C2B-9615-D34F2119AF7F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5DA2A9CC-ED90-47B0-82A4-074B183D1C3D}
