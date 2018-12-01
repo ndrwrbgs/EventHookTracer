@@ -17,7 +17,7 @@
 #if NET45 // AsyncLocal is .NET 4.6+, so fall back to CallContext for .NET 4.5
         private sealed class AsyncLocal<T>
         {
-            private static readonly string logicalDataKey = "__AsyncLocal_" + Guid.NewGuid();
+            private readonly string logicalDataKey = "__AsyncLocal_" + Guid.NewGuid();
 
             public T Value
             {
@@ -41,7 +41,7 @@
         /// <summary>
         ///     See <see cref="Active" /> for why this exists :(
         /// </summary>
-        private static readonly AsyncLocal<EventHookScope> activeScope = new AsyncLocal<EventHookScope>();
+        private readonly AsyncLocal<EventHookScope> activeScope = new AsyncLocal<EventHookScope>();
 
         public EventHookScopeManager([NotNull] EventHookTracer tracer, EventHandler<LogEventArgs> spanLog, EventHandler<SetTagEventArgs> spanSetTag)
         {
@@ -55,9 +55,7 @@
             this.tracer.OnSpanActivating(eventHookSpan);
 
             var previousActive = activeScope.Value;
-            var wrap = new EventHookScope(
-                this.tracer, finishSpanOnDispose, eventHookSpan.OperationName, this.spanLog, this.spanSetTag,
-                finishSpanOnDispose ? () => { activeScope.Value = previousActive; } : (Action)null);
+            var wrap = new EventHookScope(this.tracer, eventHookSpan, finishSpanOnDispose ? () => { activeScope.Value = previousActive; } : (Action)null);
             activeScope.Value = wrap;
 
             // Perform the one-time-activation logic (like logging tags)

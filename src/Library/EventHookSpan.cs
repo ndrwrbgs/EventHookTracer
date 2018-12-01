@@ -6,20 +6,22 @@
     using OpenTracing.Noop;
     using OpenTracing.Tag;
 
-    public sealed class EventHookSpan : StronglyTypedSpan<EventHookSpan, ISpanContext>, IEquatable<EventHookSpan>
+    public sealed class EventHookSpan : StronglyTypedSpan<EventHookSpan, EventHookSpanContext>, IEquatable<EventHookSpan>
     {
         private readonly EventHookTracer tracer;
         private readonly EventHandler<LogEventArgs> spanLog;
         private readonly EventHandler<SetTagEventArgs> spanSetTag;
         internal Action<EventHookSpan> onActivated { get; set; }
 
-        public string OperationName { get; }
+        public string OperationName { get; private set; }
 
         public EventHookSpan(
             EventHookTracer tracer,
             string operationName,
             EventHandler<LogEventArgs> spanLog,
             EventHandler<SetTagEventArgs> spanSetTag,
+            EventHookSpanContext context,
+            bool ownsContext,
             Action<EventHookSpan> onActivated)
         {
             this.OperationName = operationName;
@@ -27,66 +29,68 @@
             this.spanLog = spanLog;
             this.spanSetTag = spanSetTag;
             this.onActivated = onActivated;
+            this.MyContext = context;
+            this.ownsContext = ownsContext;
         }
 
         public override EventHookSpan SetTag(BooleanTag tag, bool value)
         {
             this.spanSetTag(this, new SetTagEventArgs(tag.Key, value));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan SetTag(IntOrStringTag tag, string value)
         {
             this.spanSetTag(this, new SetTagEventArgs(tag.Key, value));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan SetTag(IntTag tag, int value)
         {
             this.spanSetTag(this, new SetTagEventArgs(tag.Key, value));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan SetTag(StringTag tag, string value)
         {
             this.spanSetTag(this, new SetTagEventArgs(tag.Key, value));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan SetTag(string key, string value)
         {
             this.spanSetTag(this, new SetTagEventArgs(key, value));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan SetTag(string key, bool value)
         {
             this.spanSetTag(this, new SetTagEventArgs(key, value));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan SetTag(string key, int value)
         {
             this.spanSetTag(this, new SetTagEventArgs(key, value));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan SetTag(string key, double value)
         {
             this.spanSetTag(this, new SetTagEventArgs(key, value));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan Log(IEnumerable<KeyValuePair<string, object>> fields)
         {
             this.spanLog(this, new LogEventArgs(DateTimeOffset.UtcNow, fields));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
         {
             this.spanLog(this, new LogEventArgs(timestamp, fields));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan Log(string @event)
@@ -96,7 +100,7 @@
                 new LogEventArgs(
                     DateTimeOffset.UtcNow,
                     new Dictionary<string, object> {["event"] = @event}));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan Log(DateTimeOffset timestamp, string @event)
@@ -106,24 +110,46 @@
                 new LogEventArgs(
                     DateTimeOffset.UtcNow,
                     new Dictionary<string, object> {["event"] = @event}));
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            // TODO: Most of these can be 'return this'
+            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.Context, this.ownsContext, this.onActivated);
         }
 
         public override EventHookSpan SetBaggageItem(string key, string value)
         {
-            // TODO: Not baggage support - is that allowed?
-            return new EventHookSpan(this.tracer, this.OperationName, this.spanLog, this.spanSetTag, this.onActivated);
+            // TODO: For this to be proper, will need a copy-on-write dictionary
+            if (!this.ownsContext)
+            {
+                if (this.myContext == null)
+                {
+                    this.MyContext = new EventHookSpanContext
+                    {
+                        Dictionary = new Dictionary<string, string>()
+                    };
+                }
+                else
+                {
+                    this.MyContext = new EventHookSpanContext
+                    {
+                        Dictionary = new Dictionary<string, string>(this.myContext.Dictionary)
+                    };
+                }
+
+                this.ownsContext = true;
+            }
+
+            this.Context.Dictionary[key] = value;
+            return this;
         }
 
         public override string GetBaggageItem(string key)
         {
-            // TODO: Not baggage support - is that allowed?
-            return null;
+            return this.Context.Dictionary.TryGetValue(key, out string value) ? value : null;
         }
 
         public override EventHookSpan SetOperationName(string operationName)
         {
-            return new EventHookSpan(this.tracer, operationName, this.spanLog, this.spanSetTag, this.onActivated);
+            this.OperationName = operationName;
+            return this;
         }
 
         public override void Finish()
@@ -141,15 +167,25 @@
             this.tracer.OnSpanFinished(this);
         }
 
-        public override ISpanContext Context
+        // TODO: Can remove once we have copy-on-write
+        private bool ownsContext = false;
+        private EventHookSpanContext myContext;
+
+        private EventHookSpanContext MyContext
         {
             get
             {
-                // TODO: Is it required we return a non-null impl here?
-                //// return null;
-                return NoopTracerFactory.Create().ActiveSpan.Context; // Cannot directly access NoopSpanContext's ctor
+                if (this.myContext == null)
+                {
+                    this.myContext = new EventHookSpanContext();
+                    this.ownsContext = true;
+                }
+
+                return this.myContext;
             }
+            set { this.myContext = value; }
         }
+        public override EventHookSpanContext Context => MyContext;
 
         public bool Equals(EventHookSpan other)
         {

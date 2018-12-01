@@ -12,6 +12,59 @@ namespace Library.Tests
     using OpenTracing.Mock;
 
     [TestClass]
+    public class BaggageTests{
+        
+        private EventHookTracer tracer;
+
+        [TestInitialize]
+        public void Initialize()
+        {
+            var eventTracer= new EventHookTracer();
+            this.tracer = eventTracer;
+        }
+
+        [TestMethod]
+        public void BaggageOnSameItem()
+        {
+            var scope = this.tracer.BuildSpan("1")
+                .StartActive();
+            scope.Span.SetBaggageItem("key", "value");
+
+            Assert.AreEqual("value", scope.Span.GetBaggageItem("key"));
+        }
+
+        [TestMethod]
+        public void BaggagePropagatesToChildren()
+        {
+            using (var scope = this.tracer.BuildSpan("1")
+                .StartActive())
+            {
+                scope.Span.SetBaggageItem("key", "value");
+
+                using (var child = this.tracer.BuildSpan("2")
+                    .StartActive())
+                {
+                    Assert.AreEqual("value", child.Span.GetBaggageItem("key"));
+                }
+            }
+        }
+        
+
+        [TestMethod]
+        public void ChildDoesNotAffectParent()
+        {
+            var scope = this.tracer.BuildSpan("1")
+                .StartActive();
+
+            var child = this.tracer.BuildSpan("2")
+                .StartActive();
+            child.Span.SetBaggageItem("key", "value");
+
+            Assert.AreEqual(null, scope.Span.GetBaggageItem("key"));
+        }
+    }
+
+    [TestClass]
     public class EventHookTests
     {
         private ITracer tracer;

@@ -6,25 +6,30 @@
     using OpenTracing.Noop;
     using OpenTracing.Propagation;
 
-    public sealed class EventHookTracer : StronglyTypedTracer<EventHookSpanBuilder, ISpanContext, EventHookScopeManager, EventHookSpan>
+    public sealed class EventHookTracer : StronglyTypedTracer<EventHookSpanBuilder, EventHookSpanContext, EventHookScopeManager, EventHookSpan>
     {
+        public EventHookTracer()
+        {
+            this.ScopeManager = new EventHookScopeManager(this, this.SpanLog, this.SpanSetTag);
+        }
+
         public override EventHookSpanBuilder BuildSpan(string operationName)
         {
-            return new EventHookSpanBuilder(this, operationName, this.SpanLog, this.SpanSetTag, new List<SetTagEventArgs>());
+            return new EventHookSpanBuilder(this, operationName, this.SpanLog, this.SpanSetTag, new List<SetTagEventArgs>(), null);
         }
 
-        public override void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
+        public override void Inject<TCarrier>(EventHookSpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
         {
         }
 
-        public override ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
+        public override EventHookSpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
         {
             // TODO: Is it required we return a non-null impl here?
-            //// return null;
-            return NoopTracerFactory.Create().ActiveSpan.Context; // Cannot directly access NoopSpanContext's ctor
+            return null;
+            //return new EventHookSpanContext();
         }
 
-        public override EventHookScopeManager ScopeManager => new EventHookScopeManager(this, this.SpanLog, this.SpanSetTag);
+        public override EventHookScopeManager ScopeManager { get; }
 
         public override EventHookSpan ActiveSpan
         {
@@ -37,7 +42,7 @@
                     return null;
                 }
 
-                return new EventHookSpan(this, activeScope.Span.OperationName, this.SpanLog, this.SpanSetTag, null);
+                return activeScope.Span;
             }
         }
 
@@ -53,22 +58,22 @@
 
         internal void OnSpanActivated(EventHookSpan eventHookSpan)
         {
-            this.SpanActivated(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
+            this.SpanActivated(this, new BasicSpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
         }
 
         internal void OnSpanActivating(EventHookSpan eventHookSpan)
         {
-            this.SpanActivating(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
+            this.SpanActivating(this, new BasicSpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
         }
 
         internal void OnSpanFinished(EventHookSpan eventHookSpan)
         {
-            this.SpanFinished(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
+            this.SpanFinished(this, new BasicSpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
         }
 
         internal void OnSpanFinishing(EventHookSpan eventHookSpan)
         {
-            this.SpanFinishing(this, new SpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
+            this.SpanFinishing(this, new BasicSpanLifecycleEventArgs(eventHookSpan, eventHookSpan.OperationName));
         }
     }
 }

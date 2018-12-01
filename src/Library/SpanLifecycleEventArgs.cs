@@ -24,6 +24,4 @@
         {
         }
     }
-
-    public sealed class SpanStarting
 }
