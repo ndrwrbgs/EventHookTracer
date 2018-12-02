@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 namespace OpenTracing.Contrib.EventHookTracer
 {
+    using System.Collections.Immutable;
+
     using OpenTracing.Contrib.MutableTracer;
 
     public sealed class EventHookSpanContext : ISpanContext
     {
-        // TODO: If CopyOnWrite dictionary, do not need to expose set
-        public Dictionary<string, string> Dictionary { get; internal set; } = new Dictionary<string, string>();
+        public ImmutableDictionary<string, string> Dictionary { get; internal set; } = ImmutableDictionary<string, string>.Empty;
 
         public IEnumerable<KeyValuePair<string, string>> GetBaggageItems()
         {

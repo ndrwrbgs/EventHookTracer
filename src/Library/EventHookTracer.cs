@@ -2,6 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
+
     using OpenTracing.Contrib.MutableTracer;
     using OpenTracing.Noop;
     using OpenTracing.Propagation;
@@ -15,7 +17,7 @@
 
         public override EventHookSpanBuilder BuildSpan(string operationName)
         {
-            return new EventHookSpanBuilder(this, operationName, this.SpanLog, this.SpanSetTag, new List<SetTagEventArgs>(), null);
+            return new EventHookSpanBuilder(this, operationName, this.SpanLog, this.SpanSetTag, ImmutableList<SetTagEventArgs>.Empty, null, false);
         }
 
         public override void Inject<TCarrier>(EventHookSpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)

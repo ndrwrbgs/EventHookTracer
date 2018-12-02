@@ -55,7 +55,7 @@
             this.tracer.OnSpanActivating(eventHookSpan);
 
             var previousActive = activeScope.Value;
-            var wrap = new EventHookScope(this.tracer, eventHookSpan, finishSpanOnDispose ? () => { activeScope.Value = previousActive; } : (Action)null);
+            var wrap = new EventHookScope(this.tracer, eventHookSpan, finishSpanOnDispose, () => { activeScope.Value = previousActive; });
             activeScope.Value = wrap;
 
             // Perform the one-time-activation logic (like logging tags)

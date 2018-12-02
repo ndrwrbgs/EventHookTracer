@@ -14,10 +14,12 @@
         public EventHookScope(
             [NotNull] EventHookTracer tracer,
             [NotNull] EventHookSpan span,
+            bool finishSpanOnDispose,
             Action onDispose)
         {
             this.tracer = tracer;
             this.span = span;
+            this.finishSpanOnDispose = finishSpanOnDispose;
             this.onDispose = onDispose;
         }
 

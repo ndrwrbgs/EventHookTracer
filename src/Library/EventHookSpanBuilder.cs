@@ -2,6 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
+
     using JetBrains.Annotations;
     using OpenTracing.Contrib.MutableTracer;
     using OpenTracing.Tag;
@@ -13,16 +15,18 @@
         private readonly string operationName;
         private readonly EventHandler<LogEventArgs> spanLog;
         private readonly EventHandler<SetTagEventArgs> spanSetTag;
-        private readonly IList<SetTagEventArgs> tagsOnStart;
+        private readonly IImmutableList<SetTagEventArgs> tagsOnStart;
         private readonly EventHookSpanContext parentSpanContext;
+        private readonly bool ignoreActiveSpan;
 
         public EventHookSpanBuilder(
             [NotNull] EventHookTracer tracer,
             string operationName,
             EventHandler<LogEventArgs> spanLog,
             EventHandler<SetTagEventArgs> spanSetTag,
-            IList<SetTagEventArgs> tagsOnStart,
-            EventHookSpanContext parentSpanContext)
+            IImmutableList<SetTagEventArgs> tagsOnStart,
+            EventHookSpanContext parentSpanContext,
+            bool ignoreActiveSpan)
         {
             this.tracer = tracer;
             this.operationName = operationName;
@@ -30,6 +34,7 @@
             this.spanSetTag = spanSetTag;
             this.tagsOnStart = tagsOnStart;
             this.parentSpanContext = parentSpanContext;
+            this.ignoreActiveSpan = ignoreActiveSpan;
         }
 
 
@@ -41,7 +46,8 @@
                 this.spanLog,
                 this.spanSetTag,
                 this.tagsOnStart,
-                parent);
+                parent,
+                this.ignoreActiveSpan);
         }
 
         public override EventHookSpanBuilder AsChildOf(EventHookSpan parent)
@@ -52,84 +58,90 @@
                 this.spanLog,
                 this.spanSetTag,
                 this.tagsOnStart,
-                parent.Context);
+                parent.Context,
+                this.ignoreActiveSpan);
         }
 
         public override EventHookSpanBuilder AddReference(string referenceType, EventHookSpanContext referencedContext)
         {
-            // TODO: Not tracking children presently - relying only on 'current active' in OnActivating
-            ////return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, this.tagsOnStart);
+            if (string.Equals(referenceType, References.ChildOf))
+            {
+                return new EventHookSpanBuilder(
+                    this.tracer,
+                    this.operationName,
+                    this.spanLog,
+                    this.spanSetTag,
+                    this.tagsOnStart,
+                    referencedContext,
+                    this.ignoreActiveSpan);
+            }
+            
             return this;
         }
 
         public override EventHookSpanBuilder IgnoreActiveSpan()
         {
-            // TODO: Not tracking children presently - relying only on 'current active' in OnActivating
-            ////return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, this.tagsOnStart);
-            return this;
+            return new EventHookSpanBuilder(
+                this.tracer,
+                this.operationName,
+                this.spanLog,
+                this.spanSetTag,
+                this.tagsOnStart,
+                this.parentSpanContext,
+                true);
         }
 
         public override EventHookSpanBuilder WithTag(BooleanTag tag, bool value)
         {
-            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
-                {new SetTagEventArgs(tag.Key, value)};
-            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext);
+            var newTags = this.tagsOnStart.Add(new SetTagEventArgs(tag.Key, value));
+            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext, this.ignoreActiveSpan);
         }
 
         public override EventHookSpanBuilder WithTag(IntOrStringTag tag, string value)
         {
-            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
-                {new SetTagEventArgs(tag.Key, value)};
-            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext);
+            var newTags = this.tagsOnStart.Add(new SetTagEventArgs(tag.Key, value));
+            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext, this.ignoreActiveSpan);
         }
 
         public override EventHookSpanBuilder WithTag(IntTag tag, int value)
         {
-            // TODO: use something else, List is not the most efficient here
-            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
-                {new SetTagEventArgs(tag.Key, value)};
-            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext);
+            var newTags = this.tagsOnStart.Add(new SetTagEventArgs(tag.Key, value));
+            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext, this.ignoreActiveSpan);
         }
 
         public override EventHookSpanBuilder WithTag(StringTag tag, string value)
         {
-            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
-                {new SetTagEventArgs(tag.Key, value)};
-            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext);
+            var newTags = this.tagsOnStart.Add(new SetTagEventArgs(tag.Key, value));
+            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext, this.ignoreActiveSpan);
         }
 
         public override EventHookSpanBuilder WithTag(string key, string value)
         {
-            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
-                {new SetTagEventArgs(key, value)};
-            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext);
+            var newTags = this.tagsOnStart.Add(new SetTagEventArgs(key, value));
+            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext, this.ignoreActiveSpan);
         }
 
         public override EventHookSpanBuilder WithTag(string key, bool value)
         {
-            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
-                {new SetTagEventArgs(key, value)};
-            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext);
+            var newTags = this.tagsOnStart.Add(new SetTagEventArgs(key, value));
+            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext, this.ignoreActiveSpan);
         }
 
         public override EventHookSpanBuilder WithTag(string key, int value)
         {
-            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
-                {new SetTagEventArgs(key, value)};
-            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext);
+            var newTags = this.tagsOnStart.Add(new SetTagEventArgs(key, value));
+            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext, this.ignoreActiveSpan);
         }
 
         public override EventHookSpanBuilder WithTag(string key, double value)
         {
-            var newTags = new List<SetTagEventArgs>(this.tagsOnStart)
-                {new SetTagEventArgs(key, value)};
-            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext);
+            var newTags = this.tagsOnStart.Add(new SetTagEventArgs(key, value));
+            return new EventHookSpanBuilder(this.tracer, this.operationName, this.spanLog, this.spanSetTag, newTags, this.parentSpanContext, this.ignoreActiveSpan);
         }
 
         public override EventHookSpanBuilder WithStartTimestamp(DateTimeOffset timestamp)
         {
             // TODO: Not currently tracking specific start times
-            ////return new EventHookSpanBuilder(builder, this.tracer, this.operationName, this.spanLog, this.spanSetTag, this.tagsOnStart);
             return this;
         }
 
@@ -149,20 +161,26 @@
 
         public override EventHookSpan Start()
         {
-            // TODO: IgnoreActive support
-            var currentSpan = this.tracer.ScopeManager.Active?.Span;
-            var parent = this.parentSpanContext;
-            if (currentSpan != null)
+            EventHookSpanContext parentContext;
+
+            // Explicit parent
+            parentContext = this.parentSpanContext;
+
+            // Implicit parent
+            if (parentContext == null && !this.ignoreActiveSpan)
             {
-                parent = currentSpan.Context;
+                var currentSpan = this.tracer.ScopeManager.Active?.Span;
+                if (currentSpan != null)
+                {
+                    parentContext = currentSpan.Context;
+                }
             }
 
             // this.impl.Start() above will(/should) internally all SetTag for each of the specified tags.
             // unfortunately there's no way in the interface to capture that call (it'll call it on it's concrete type)
             // so we must pseudo-replicate the behavior here.
             return new EventHookSpan(this.tracer, this.operationName, this.spanLog, this.spanSetTag,
-                                     parent,
-                                     ownsContext: false,
+                                     parentContext,
                 onActivated: s =>
                 {
                     foreach (var tagOnStart in this.tagsOnStart)
